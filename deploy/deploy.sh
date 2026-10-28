@@ -9,7 +9,11 @@ cd "$(dirname "$0")/.."
 npm ci
 npm run build            # base '/' в vite.config.ts — подходит и для домена, и для github.io
 cp dist/index.html dist/404.html
-rsync -az --delete -e "ssh -i $KEY -o StrictHostKeyChecking=accept-new" \
+# Демо проектов лежат рядом с сайтом, но собираются из своих репозиториев.
+# Без исключений --delete снёс бы их при каждом деплое сайта.
+rsync -az --delete \
+  --exclude '/alice/' --exclude '/python-faq-bot/' --exclude '/react-bugfix/' --exclude '/blockchain-practice/' \
+  -e "ssh -i $KEY -o StrictHostKeyChecking=accept-new" \
   dist/ "root@$IP:/var/www/lendvis/"
 ssh -i "$KEY" "root@$IP" 'nginx -t && systemctl reload nginx && echo deploy-ok'
 echo "== сайт залит на $IP =="

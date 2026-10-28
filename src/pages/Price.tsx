@@ -4,14 +4,15 @@ import { useLang } from '../lib/i18n'
 import { trackGoal } from '../lib/metrika'
 import {
   DIAGNOSTIC,
+  DIAGNOSTIC_FROM,
   KINDS,
-  MIN_HOURS,
   MIN_ORDER,
   RATE,
   RATE_HIGH,
   SUPPORT_FROM,
   money,
   priceRange,
+  termLabel,
 } from '../pricing'
 
 /**
@@ -35,8 +36,7 @@ export default function Price() {
   const [low, high] = priceRange(kind, tier)
   const rate = kind.rate ?? RATE
 
-  /** «1–1 нед.» читается как опечатка, поэтому одинаковые границы схлопываем в одно число. */
-  const weeks = tier.weeks[0] === tier.weeks[1] ? `${tier.weeks[0]}` : `${tier.weeks[0]}–${tier.weeks[1]}`
+  const term = termLabel(tier.days, ru)
   const hours = `${tier.hours[0]}–${tier.hours[1]}`
 
   function pickKind(id: string) {
@@ -119,19 +119,19 @@ export default function Price() {
               <p className="mt-4 text-[13.5px] text-soft">
                 {kind.hourly
                   ? ru
-                    ? `Примерно ${hours} часов, ${weeks} нед. по календарю.`
-                    : `Roughly ${hours} hours, ${weeks} week(s) on the calendar.`
+                    ? `Примерно ${hours} ч работы, ${term} по календарю.`
+                    : `Roughly ${hours} hours of work, ${term} on the calendar.`
                   : ru
-                    ? `Срок — ${weeks} нед. по календарю.`
-                    : `Delivered in ${weeks} week(s).`}
+                    ? `${hours} ч работы по ${money(rate)} ₽, срок — ${term}.`
+                    : `${hours} hours at ${money(rate)} ₽, delivered in ${term}.`}
               </p>
             </div>
 
             <p className="mt-6 max-w-[34ch] text-[13px] leading-[1.65] text-faint sm:mt-0">
               {kind.hourly
                 ? ru
-                  ? `Здесь считаем по часам: ${money(rate)} ₽/час, минимум ${MIN_HOURS} часа. Пока чужой код не открыт, честной фиксированной цены не существует — существует только завышенная на всякий случай.`
-                  : `This one is billed hourly: ${money(rate)} ₽/hour, ${MIN_HOURS} hours minimum. Until the inherited code is open, there is no honest fixed price — only one padded just in case.`
+                  ? `Здесь считаем по часам: ${money(rate)} ₽/час, от одного часа. Пока чужой код не открыт, честной фиксированной цены не существует — существует только завышенная на всякий случай.`
+                  : `This one is billed hourly: ${money(rate)} ₽/hour, from one hour. Until the inherited code is open, there is no honest fixed price — only one padded just in case.`
                 : ru
                   ? 'Это вилка, а не счёт. Цена фиксируется за результат и не меняется, даже если работа пойдёт быстрее задуманного. Точную сумму называем письменно после разбора задачи.'
                   : 'This is a range, not an invoice. The price is fixed against the result and does not move, even if the work goes faster than planned. The exact figure comes in writing once we have scoped it.'}
@@ -185,34 +185,34 @@ export default function Price() {
         <div className="mt-10 grid gap-x-10 gap-y-10 md:grid-cols-3">
           {[
             {
-              t: ru ? 'Первый шаг стоит недорого' : 'The first step is cheap',
+              t: ru ? 'Оценка — бесплатно' : 'Estimates are free',
               d: ru
-                ? `Разбор задачи, письменный план и точная цена — ${money(DIAGNOSTIC)} ₽. Если заказываете работу, эта сумма вычитается из неё. Так вы не платите за воздух, а мы не оцениваем бесплатно.`
-                : `Scoping, a written plan and an exact price cost ${money(DIAGNOSTIC)} ₽. If you go ahead, that comes off the invoice. You pay for something real; we don't estimate for free.`,
+                ? `Небольшую задачу оценим бесплатно, обычно в тот же день. Для крупной — от ${money(DIAGNOSTIC_FROM)} ₽ — делаем разбор, письменный план и точную цену за ${money(DIAGNOSTIC)} ₽, и эта сумма вычитается из стоимости работ.`
+                : `We estimate a small task for free, usually the same day. For a large one — from ${money(DIAGNOSTIC_FROM)} ₽ — scoping, a written plan and an exact price cost ${money(DIAGNOSTIC)} ₽, which comes off the invoice.`,
             },
             {
               t: ru ? 'Минимальный заказ' : 'Minimum order',
               d: ru
-                ? `${money(MIN_ORDER)} ₽, а почасовая работа — от ${MIN_HOURS} часов. Любая задача, даже крошечная, съедает разговор, настройку и передачу — за меньшее браться нечестно по отношению к тем, кто уже в работе.`
-                : `${money(MIN_ORDER)} ₽, and hourly work starts at ${MIN_HOURS} hours. Even a tiny task eats a conversation, a setup and a handover — taking less would be unfair to the projects already running.`,
+                ? `Один час работы — ${money(MIN_ORDER)} ₽. Мелкая правка не должна стоить как проект: вы платите за время, которое она реально заняла.`
+                : `One hour of work — ${money(MIN_ORDER)} ₽. A small fix should not cost like a project: you pay for the time it actually took.`,
             },
             {
               t: ru ? 'Что двигает цену' : 'What moves the price',
               d: ru
-                ? 'Количество экранов, интеграции с чужими системами, срочность и наличие готового дизайна. Больше всего — интеграции: чужое API диктует свои правила, и предугадать их нельзя.'
-                : 'The number of screens, integrations with external systems, urgency, and whether a design already exists. Integrations most of all: someone else’s API sets the rules, and those cannot be guessed.',
+                ? `Количество экранов, интеграции с чужими системами, срочность и наличие готового дизайна. Больше всего — интеграции: чужое API диктует свои правила, поэтому интеграции, 1С и блокчейн идут по ${money(RATE_HIGH)} ₽/час вместо ${money(RATE)}.`
+                : `The number of screens, integrations with external systems, urgency, and whether a design already exists. Integrations most of all: someone else’s API sets the rules, so integrations, 1C and blockchain are billed at ${money(RATE_HIGH)} ₽/hour instead of ${money(RATE)}.`,
             },
             {
               t: ru ? 'Почасово, если работа непредсказуема' : 'Hourly when the work is unpredictable',
               d: ru
-                ? `Починка чужого кода и доработки 1С считаются по часам: ${money(RATE)} и ${money(RATE_HIGH)} ₽/час. Пока не открыл код, честной фиксированной цены не бывает — бывает только завышенная на всякий случай.`
-                : `Fixing inherited code and 1C work are billed hourly: ${money(RATE)} and ${money(RATE_HIGH)} ₽/hour. Before opening the code there is no honest fixed price — only one padded just in case.`,
+                ? `Починка чужого кода — ${money(RATE)} ₽/час, доработки 1С — ${money(RATE_HIGH)} ₽/час. Пока не открыл код, честной фиксированной цены не бывает — бывает только завышенная на всякий случай.`
+                : `Fixing inherited code is ${money(RATE)} ₽/hour, 1C work is ${money(RATE_HIGH)} ₽/hour. Before opening the code there is no honest fixed price — only one padded just in case.`,
             },
             {
               t: ru ? 'Поддержка после запуска' : 'Support after launch',
               d: ru
-                ? `От ${money(SUPPORT_FROM)} ₽ в месяц: обновления, мелкие правки, присмотр за сервером. Не обязательна — код и доступы ваши с первого дня, и уйти можно в любой момент.`
-                : `From ${money(SUPPORT_FROM)} ₽ a month: updates, small fixes, keeping an eye on the server. Optional — the code and the access are yours from day one, and you can walk away whenever.`,
+                ? `От ${money(SUPPORT_FROM)} ₽ в месяц: сервер, присмотр и мелкие правки — например, поменять цены или меню. Не обязательна — код и доступы ваши с первого дня, и уйти можно в любой момент.`
+                : `From ${money(SUPPORT_FROM)} ₽ a month: hosting, monitoring and small edits — say, updating prices or a menu. Optional — the code and the access are yours from day one, and you can walk away whenever.`,
             },
             {
               t: ru ? 'Оплата по этапам' : 'Paid in stages',
